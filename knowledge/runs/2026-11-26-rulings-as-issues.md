@@ -6,7 +6,7 @@ The operator's direction, on asking where R4 was: an artifact for open questions
 
 - The design skill: an open ruling waits on the story's checklist, and the design's table says so; no checklist in a thread — [https://github.com/KirkDiggler/rpg-project/pull/1239](https://github.com/KirkDiggler/rpg-project/pull/1239).
 - The story skill: a story shows what has been played, is carried by a session, and holds the rulings needing the operator as a checklist — [https://github.com/KirkDiggler/rpg-project/pull/1239](https://github.com/KirkDiggler/rpg-project/pull/1239).
-- In use before the words were: R3 and R9 wait on [the story](https://github.com/KirkDiggler/rpg-project/issues/1237); R4 and R8 are entered in the table; the playtest [#1238](https://github.com/KirkDiggler/rpg-project/issues/1238) is the story's sub-issue.
+- In use before the words were: R3 and R9 wait on [the story](https://github.com/KirkDiggler/rpg-project/issues/1237); R4 and R8 are entered in the table; the playtest [#1238](https://github.com/KirkDiggler/rpg-project/issues/1238) is the story's sub-issue — [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237).
 
 ## Decided
 
