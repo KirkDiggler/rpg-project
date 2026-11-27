@@ -70,6 +70,22 @@ Merge: agreed proto contract/generated SDK; approved Assets publication/merge;
 Encounter merge/tag → Session real tag pin/merge/tag → API real pins/merge → Web
 merged provider pins/merge. This sequence does not grant merge authority.
 
+## Current dependency finding
+
+Protos456 is operator-merged at8bc21d0; publication CI46061574223 succeeded.
+SDKv0.1.293 peels to generated37f124a and includes Go/TS channel bindings. Web
+normally merged current dev96f317a5 and adopted that SDK at0b4a939e; typing and84
+focused/regression checks passed. The base merge retained upstream's npcDescriptor
+rename rather than recreating it here. No full Web gate or visible delivery claim.
+
+T2/T8's real emissive proof target is unresolved: the one world emissive-map
+candidate has zero source factors, and all72 published NPC looks with emissive
+body maps have zero nonblack texels in a conservative base-level mapped footprint.
+Private evidence is Assetsdf47957. [Assets351](https://github.com/KirkDiggler/rpg-game-assets/issues/351)
+tracks one genuine emissive proof asset; staged preparation of an additional
+world prop is proposed, not silently folded into the approved target set. This
+blocks real emissive enrollment/acceptance, not the settled value/wire semantics.
+
 ## Shared task interfaces
 
 **Authored/captured value:** `MaterialChannelAdjustment {targetId, normal?,
@@ -162,7 +178,8 @@ on the checkpoint; full `npm run ci-check` at the Web PR boundary, not each edit
 **Prerequisites:** T1 types; source recipes/GLBs available; no publication permission implied.
 **Files:** create Assets `scripts/material_channel_capabilities.py` and
 `test_material_channel_capabilities.py`; modify `build_world_material_catalog_v2.py`,
-`world_material_catalog.py`, `publish_world_materials.py`, their relevant tests,
+`world_material_catalog.py`, `world_material_atlas_candidate.py`,
+`publish_world_materials.py`, their relevant tests,
 `docs/pipelines/world-materials.md` and selected source recipe. Web modifies
 `scripts/world-material-catalog.mjs`, `src/rendering/worldMaterialTypes.ts`,
 `worldMaterialCatalog.ts`, `worldAtlasCatalogSchema.mjs`/`.d.mts`, corresponding
@@ -207,8 +224,8 @@ owners remain separate. Unknown/never-seen actors are not added to any roster.
 no hand-written tests of protobuf mechanics.
 - [x] Add documented shared messages and additive owner fields.
 - [x] Run `make format` and `make test` against current main623df7e.
-- [ ] Complete current-head CI/review handoff for [Protos456](https://github.com/KirkDiggler/rpg-api-protos/pull/456), head53a10d9; contract is pushed, generation/compilation check pending.
-- [ ] Verify actual generated SDK/tag before T5/T7 consumer dependency updates.
+- [x] Operator merged [Protos456](https://github.com/KirkDiggler/rpg-api-protos/pull/456) at8bc21d0; publication CI46061574223 passed.
+- [x] Verified genuine SDKv0.1.293→generated37f124a, merge ancestry and both language bindings; Web adopted it through normal npm tooling.
 **Verification:** Protos `make format && make test`; configured GitHub checks.
 **Evidence:** PR/head/checks and genuine generated SDK identity; no manual generated code.
 
