@@ -82,9 +82,13 @@ T2/T8's real emissive proof target is unresolved: the one world emissive-map
 candidate has zero source factors, and all72 published NPC looks with emissive
 body maps have zero nonblack texels in a conservative base-level mapped footprint.
 Private evidence is Assetsdf47957. [Assets351](https://github.com/KirkDiggler/rpg-game-assets/issues/351)
-tracks one genuine emissive proof asset; staged preparation of an additional
-world prop is proposed, not silently folded into the approved target set. This
-blocks real emissive enrollment/acceptance, not the settled value/wire semantics.
+tracks one genuine emissive proof asset. The operator approved bounded additional
+candidate preparation; publication remains separate. Original Castle Wall01
+has black unlinked emission. A source-bound Dark Fantasy Lantern01 candidate
+retains authored emission strength1 and has a visible authored/off difference
+(4362 pixels in the staged Blender comparison). Its old source image names are
+bound through an explicit three-resource candidate alias table, not renderer
+inference. Runtime promotion/capture acceptance is still required.
 
 ## Shared task interfaces
 
@@ -292,7 +296,10 @@ have exact wire presence, hidden parent absent while frame values remain availab
 
 ### Task 6: Shared arithmetic with existing material owners (T6)
 
-**Delivers:** R3/R4/R8/R9. **Owner:** Web rendering. **Prerequisites:** T1/T2.
+**Delivers:** R3/R4/R8/R9. **Owner:** Web rendering. **Prerequisites:** T1 for the
+pure arithmetic kernel; T2 for real binding resolution and material-owner wiring.
+The kernel can be implemented/tested before provider publication; doing so does
+not complete T6's binding, ownership or visual verification.
 **Files:** create `src/rendering/materialChannelValues.ts` and its tests;
 modify `src/components/hex-grid/useRememberedModelTint.ts`,
 `ClassCharacterModel.tsx`, `WorldAssetModel.tsx`,
@@ -318,6 +325,12 @@ adjustment; unsupported trim/leaves unchanged; standing/downed selectors differ 
 - [ ] Run focused GREEN and established surface/atlas/height/activity regressions.
 **Verification:** Web `npm run test:run -- src/rendering/materialChannelValues.test.ts src/rendering/worldSurfaceMaterials.test.ts src/rendering/worldAtlasMaterials.test.ts src/components/hex-grid/WorldAnchoredHeight.test.tsx src/components/hex-grid/ClassCharacterModel.animation.test.tsx` plus new lifecycle tests.
 **Evidence:** numerical, ownership and integration assertions, not just mocked calls.
+
+Kernel checkpoint: Webba4cb643 passes104 focused/regression tests plus eslint and
+typing. Default/Off/scaling, signed normals, source-zero refusal, interval checks,
+detachment/nonaccumulation and shader-float overflow are covered. Actual world/NPC
+material-owner wiring and binding/lifecycle integration remain incomplete; T6 is
+not marked complete from the pure kernel alone.
 
 ### Task 7: Shared controls, native adapters and captured rendering (T7)
 
