@@ -81,28 +81,32 @@ must do.
 
 ### Waiting on the operator
 
-A question about a slice goes on that slice's sub-issue; a question about the
-design goes on the design PR. Chat carries one line and the link.
+A question about a slice goes on that slice's sub-issue. A question about the
+design is a **ruling**: it has a row in the design's table, and while it is
+open it waits on the story. Chat carries one line and the link.
 
 When a decision is the operator's and the session is waiting for it:
 
-- **The questions live in the case file, not in chat.** Post the pending
-  decisions as a `- [ ]` checklist on the design PR or the issue: one box per
-  decision, the options in one line each, the recommendation, and the items
-  already settled listed beneath so the whole state reads in one place.
+- **Open rulings wait on the story issue**, in its *Rulings needing the
+  operator* checklist: one box per ruling, its number, the question, the
+  options in one line each, the recommendation, and what it blocks. One page
+  holds the whole state. An issue per ruling is one more thing to manage, and
+  the story already exists.
+- **The design doc's table points there**: an open row's status reads
+  `open — on the story`. No checklist in a pull request's thread; a thread is
+  where a question goes to be lost.
 - **The message to the operator is one line and the link.** Chat scrolls; the
-  checklist does not. Do not restate the questions in the terminal.
+  story does not. Do not restate the questions in the terminal.
 - **Progress, duplicates and "still waiting" are not relayed.** A builder's
   idle notice, a repeated report or a status line in the terminal buries the
   one message that needs an answer.
-- **When the operator rules,** tick the box, enter the ruling in the design
-  doc's table with attribution, and reply on the same thread.
+- **When the operator rules**, tick the box, enter the ruling in the table
+  with attribution, and reply on the story. The operator's list of what needs
+  a look is the story's open boxes.
 
-Worked example: the checklist thread on rpg-project#632 (event stream). One
-comment posts the decision with its options and a recommendation; a later
-comment adds the decisions a new proposal raised; the ruling comment ticks the
-boxes and names what stays open for veto. The terminal carried one line and a
-link each time.
+Worked example: the Unreal client — R3 and R9 wait on the story,
+[rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237); the design's table in
+`ideas/unreal-client/design.md` says so.
 
 ## The artifacts
 

@@ -41,10 +41,23 @@ mechanism ("a line gives..."). Its body holds:
   what is played, what is on dev, what is open, what is not started;
 - the ordered slice list, each line a link to its sub-issue;
 - found, not yet filed: rough edges seen while playing;
-- links to the design doc and its rulings (`ideas/<topic>/design.md`).
+- links to the design doc and its rulings (`ideas/<topic>/design.md`);
+- **rulings needing the operator**: a `- [ ]` checklist, one box per open
+  ruling — its number, the question, the options in one line each, the
+  recommendation and what it blocks. Ticked the day it rules, and entered in
+  the design's table (design skill);
+- **shown**: the frames and clips of what has been played, newest first, each
+  with its date and its slice. A public repository shows only what its
+  content licenses allow, which is the operator's call; the rest lives in the
+  private store and is linked.
 
 The story closes when the operator has played it. It never grows a
 requirement list; a new want goes to the holding zone.
+
+**Carried by a session.** The story is the session's page. A session working
+on it starts there, keeps its table and its shown list current the day a part
+moves, and reports there. What a session knows that the page does not is lost
+with the session.
 
 **Slice sub-issue** — one per slice, a GitHub sub-issue of the story,
 titled `<story short name> S<n>: <the deliverable in one line>`. It is
@@ -134,9 +147,10 @@ numbers, never a separate set.
   the form.
 - **A new want:** file it in the holding zone with its `feature:<name>`
   label, in the same turn, and return to the work.
-- **Waiting on the operator:** the question goes on the story (or the
-  design PR), one line with the link in chat. The lead never asks "should
-  S2 merge?" in chat without a page the operator can open and read.
+- **Waiting on the operator:** the question goes on the story — a ruling in
+  its checklist, a slice's question on the slice — with one line and the link
+  in chat. The lead never asks "should S2 merge?" in chat without a page the
+  operator can open and read.
 - **Reporting:** a status to the operator names the slice by its sub-issue
   link and says which of its "done means" bullets hold.
 - **Closing:** a slice closes when its "done means" commands all pass and
