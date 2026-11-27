@@ -41,9 +41,11 @@ mechanism ("a line gives..."). Its body holds:
   what is played, what is on dev, what is open, what is not started;
 - the ordered slice list, each line a link to its sub-issue;
 - found, not yet filed: rough edges seen while playing;
-- links to the design doc and its rulings (`ideas/<topic>/design.md`), and
-  its open rulings, each an issue labelled `ruling` in the repository that
-  owns its consequences (design skill);
+- links to the design doc and its rulings (`ideas/<topic>/design.md`);
+- **rulings needing the operator**: a `- [ ]` checklist, one box per open
+  ruling — its number, the question, the options in one line each, the
+  recommendation and what it blocks. Ticked the day it rules, and entered in
+  the design's table (design skill);
 - **shown**: the frames and clips of what has been played, newest first, each
   with its date and its slice. A public repository shows only what its
   content licenses allow, which is the operator's call; the rest lives in the
@@ -145,10 +147,10 @@ numbers, never a separate set.
   the form.
 - **A new want:** file it in the holding zone with its `feature:<name>`
   label, in the same turn, and return to the work.
-- **Waiting on the operator:** a question about the work goes on the story; a
-  ruling goes as an issue labelled `ruling` (design skill). Chat carries one
-  line with the link. The lead never asks "should S2 merge?" in chat without a
-  page the operator can open and read.
+- **Waiting on the operator:** the question goes on the story — a ruling in
+  its checklist, a slice's question on the slice — with one line and the link
+  in chat. The lead never asks "should S2 merge?" in chat without a page the
+  operator can open and read.
 - **Reporting:** a status to the operator names the slice by its sub-issue
   link and says which of its "done means" bullets hold.
 - **Closing:** a slice closes when its "done means" commands all pass and
@@ -162,12 +164,6 @@ numbers, never a separate set.
 gh issue create -R KirkDiggler/rpg-project --title "<story> S<n>: <deliverable>" --body-file <file>
 gh api -X POST repos/KirkDiggler/rpg-project/issues/<story>/sub_issues -F sub_issue_id=<slice issue id>
 # the id is the issue's database id: gh api repos/.../issues/<n> --jq .id
-
-# a ruling that is the operator's waits as an issue, where its consequences live
-gh label create ruling -R KirkDiggler/<repo> --description "A decision that is the operator's: one issue per open ruling, in the repository that owns it."
-gh issue create -R KirkDiggler/<repo> --label ruling --assignee KirkDiggler --title "Ruling R<n>: <the question>" --body-file <file>
-# the operator's list, across every repository
-gh search issues --owner KirkDiggler --label ruling --state open
 ```
 
 The story's sub-issue summary (`total` / `completed`) is the progress bar;
