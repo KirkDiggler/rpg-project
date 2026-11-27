@@ -24,8 +24,10 @@ flowchart LR
 What differs between the two clients is presentation and transport, never
 authority. The browser crosses Envoy as gRPC-Web; the Unreal client speaks
 gRPC to the server port. Both send references and intent and render what
-comes back. How the Unreal client turns a record beat into motion, sound and
-animation is its own design and is not this document's (O1).
+comes back. What a figure looks like is chosen when it appears: the mounted
+content, or engine shapes (R10). How the Unreal client turns a record beat
+into motion, sound and animation is its own design and is not this document's
+(O1).
 
 ## Law
 
@@ -62,6 +64,7 @@ animation is its own design and is not this document's (O1).
 | R7 | The Unreal project is named after its repository, in PascalCase with an initialism as a word: `RpgDnd5eUnreal.uproject` at the repository's root, its module `RpgDnd5eUnreal`, until the operator names a product. | settled | unreal-client | KirkDiggler | 2026-11-26 |
 | R8 | The client takes the contract from the protos repository's published tag and generates it itself, with generators pinned beside the runtime it links. No sibling checkout; a bump is a one-line pull request. Generated C++ published beside the other languages waits until the runtime is settled (R3). | settled | unreal-client, protos | KirkDiggler | 2026-11-26 |
 | R9 | Unreal 5.9 Preview 2, as it runs today: Epic's tags stop at 5.9.0-preview-2 and no release exists. The release is taken when its tag appears. Linux first; platforms are named one at a time, as each is proven. | settled | unreal-client | KirkDiggler | 2026-11-26 |
+| R10 | The client ships a stand-in look. A figure's look is chosen when it appears: the mounted content when its reference resolves, otherwise engine shapes — a flat-colour figure by side, a marker on the active figure, tinted hexes. The game is complete without the content; the content dresses it, as on the web. Motion comes only from the record, whichever look is shown. The shapes are built in two steps: the minimum that lets the game be played, with the game loop; then their polish. The content is Synty's, made for Unreal, from the private store (R6), and comes by reference behind the same seam. The game runs through the engine first; the HUD and control panel come after, and after the interaction model (O1) is designed. | settled | unreal-client | KirkDiggler | 2026-11-27 |
 
 ## Open
 
@@ -71,4 +74,4 @@ animation is its own design and is not this document's (O1).
   every verb is declared. And how a beat becomes motion, sound and animation.
   It is the client's own design, and it starts now: the story is
   [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237). O2 is ruling R9; O3 is
-  settled by R5 to R8 and by the slice that mounts the content plugin.
+  settled by R5 to R8, by R10 and by the slice that mounts the content plugin.
