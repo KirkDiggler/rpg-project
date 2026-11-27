@@ -60,6 +60,7 @@ animation is its own design and is not this document's (O1).
 | R5 | The Unreal client's repository is `rpg-dnd5e-unreal`: the platform named beside the rules, as the web's is, so another engine would be `rpg-dnd5e-<engine>`. | settled | unreal-client | KirkDiggler | 2026-11-26 |
 | R6 | The client's repository is public and holds no licensed content. Unreal-format licensed content lives in `rpg-game-assets`, the private canonical store, and the client mounts it; it is never committed to the client. | settled | unreal-client, game-assets | KirkDiggler | 2026-11-26 |
 | R7 | The Unreal project is named after its repository, in PascalCase with an initialism as a word: `RpgDnd5eUnreal.uproject` at the repository's root, its module `RpgDnd5eUnreal`, until the operator names a product. | settled | unreal-client | KirkDiggler | 2026-11-26 |
+| R8 | The client takes the contract from the protos repository's published tag and generates it itself, with generators pinned beside the runtime it links. No sibling checkout; a bump is a one-line pull request. Generated C++ published beside the other languages waits until the runtime is settled (R3). | settled | unreal-client, protos | KirkDiggler | 2026-11-26 |
 
 ## Open
 
@@ -72,6 +73,6 @@ animation is its own design and is not this document's (O1).
   targets one engine version and a fixed platform list. This project's engine
   version and platforms are not chosen. Building the runtime ourselves
   reopens the list.
-- **O3 The client's repository, what remains.** Its name is R5 and its visibility R6. Open: how it consumes generated code, as a target of the protos pipeline or a published package. The project file's name is R7.
-  will hold licensed content; and how it consumes generated code, as an
-  artifact of the protos pipeline or a pinned fetch.
+- **O3 The client's repository, what remains.** Its name is R5, its visibility
+  R6, its project file's name R7 and its source of generated code R8. Open: how
+  the plugin will hold licensed content.
