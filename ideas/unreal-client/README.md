@@ -1,6 +1,6 @@
 # Idea: the Unreal client
 
-- **Law:** [design.md](design.md). R1 to R9 are settled; what remains open is what each slice finds.
+- **Law:** [design.md](design.md). R1 to R10 are settled; what remains open is the interaction model, O1, and what each slice finds.
 - **Spike:** [spike/README.md](spike/README.md). What ran, what it showed, and how to run it again.
 - **Run record:** [knowledge/runs/2026-11-24-unreal-client-design.md](../../knowledge/runs/2026-11-24-unreal-client-design.md).
 - **Paper trail:** idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154); design PR [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155); contract gap [rpg-api-protos#453](https://github.com/KirkDiggler/rpg-api-protos/issues/453).
@@ -47,7 +47,7 @@ wrapper it surveyed (R3). Numbers, evidence and the recipe are in
 
 ## Status
 
-- R1 to R9 are settled. The story, [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237),
+- R1 to R10 are settled. The story, [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237),
   carries the work; the rulings table is in the design doc.
 - Now the slices build, under the story. This
   folder gains its walkthrough, and the story skill cuts the first Unreal leg.
