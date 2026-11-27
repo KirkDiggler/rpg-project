@@ -1,6 +1,6 @@
 # Idea: the Unreal client
 
-- **Law:** [design.md](design.md). R1, R2, R5, R6, R7 and R8 are settled; R3 and R4 are open.
+- **Law:** [design.md](design.md). R1, R2 and R4 to R8 are settled; R3 and R9 are open, as issues labelled `ruling` in the client's repository.
 - **Spike:** [spike/README.md](spike/README.md). What ran, what it showed, and how to run it again.
 - **Run record:** [knowledge/runs/2026-11-24-unreal-client-design.md](../../knowledge/runs/2026-11-24-unreal-client-design.md).
 - **Paper trail:** idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154); design PR [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155); contract gap [rpg-api-protos#453](https://github.com/KirkDiggler/rpg-api-protos/issues/453).
@@ -47,7 +47,9 @@ wrapper it surveyed (R3). Numbers, evidence and the recipe are in
 
 ## Status
 
-- R1, R2 and R8 are settled. R3 and R4 are the operator's; the checklist is on the
-  design PR.
-- Nothing is built, and no repository changes until R3 and R4 rule. Then this
+- R1, R2 and R4 to R8 are settled. R3 and R9 are the operator's, each an issue labelled
+  `ruling` in [rpg-dnd5e-unreal](https://github.com/KirkDiggler/rpg-dnd5e-unreal/issues?q=label%3Aruling);
+  the story is [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237). The rulings
+  table is on the design PR.
+- Nothing more is built until R3 rules. Then this
   folder gains its walkthrough, and the story skill cuts the first Unreal leg.
