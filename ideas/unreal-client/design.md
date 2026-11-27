@@ -1,9 +1,8 @@
 # The Unreal client — a second client of one engine
 
 Index: [README.md](README.md). The spike's record and recipe:
-[spike/README.md](spike/README.md). An open ruling is an issue labelled `ruling`
-in the repository that owns its consequences, linked from the table below.
-The story is [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237).
+[spike/README.md](spike/README.md). An open ruling waits on the story's checklist,
+[rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237), and the table below says so.
 
 ## Shape
 
@@ -56,13 +55,13 @@ animation is its own design and is not this document's (O1).
 |---|---|---|---|---|---|
 | R1 | An Unreal client is a client of the running engine over the published contract: not a Go library linked into its process, not a native port of the engine. | settled | clients, protos, api | KirkDiggler | 2026-11-23 |
 | R2 | The two `descriptor` fields are renamed in place to `npc_descriptor`, tag numbers untouched, in one wave across protos, api and web under the protos repository's breaking-change label: in an alpha package a deliberate break is made in place, and a later version is for a released package. | settled | protos, web, api | KirkDiggler | 2026-11-26 |
-| R3 | TurboLink's place in the first Unreal leg: none, with raw stubs against the libraries it ships or against our own build; or in, once its generator preserves proto3 presence. | open — [rpg-dnd5e-unreal#2](https://github.com/KirkDiggler/rpg-dnd5e-unreal/issues/2) | unreal-client | — | — |
+| R3 | TurboLink's place in the first Unreal leg: none, with raw stubs against the libraries it ships or against our own build; or in, once its generator preserves proto3 presence. | open — on [the story](https://github.com/KirkDiggler/rpg-project/issues/1237) | unreal-client | — | — |
 | R4 | The engine is hosted, as the web's is: the client uses the same backend and runs the way the web's client does. A peer-to-peer or local engine would be another auth-powered handler that authenticates differently; it is known of and not taken on, and a local development mode is its own thing, later. | settled | api, deployment | KirkDiggler | 2026-11-26 |
 | R5 | The Unreal client's repository is `rpg-dnd5e-unreal`: the platform named beside the rules, as the web's is, so another engine would be `rpg-dnd5e-<engine>`. | settled | unreal-client | KirkDiggler | 2026-11-26 |
 | R6 | The client's repository is public and holds no licensed content. Unreal-format licensed content lives in `rpg-game-assets`, the private canonical store, and the client mounts it; it is never committed to the client. | settled | unreal-client, game-assets | KirkDiggler | 2026-11-26 |
 | R7 | The Unreal project is named after its repository, in PascalCase with an initialism as a word: `RpgDnd5eUnreal.uproject` at the repository's root, its module `RpgDnd5eUnreal`, until the operator names a product. | settled | unreal-client | KirkDiggler | 2026-11-26 |
 | R8 | The client takes the contract from the protos repository's published tag and generates it itself, with generators pinned beside the runtime it links. No sibling checkout; a bump is a one-line pull request. Generated C++ published beside the other languages waits until the runtime is settled (R3). | settled | unreal-client, protos | KirkDiggler | 2026-11-26 |
-| R9 | The client's engine version and platforms: which engine it pins, and what it builds for. | open — [rpg-dnd5e-unreal#3](https://github.com/KirkDiggler/rpg-dnd5e-unreal/issues/3) | unreal-client | — | — |
+| R9 | The client's engine version and platforms: which engine it pins, and what it builds for. | open — on [the story](https://github.com/KirkDiggler/rpg-project/issues/1237) | unreal-client | — | — |
 
 ## Open
 
