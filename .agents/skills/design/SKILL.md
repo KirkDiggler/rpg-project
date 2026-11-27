@@ -81,28 +81,34 @@ must do.
 
 ### Waiting on the operator
 
-A question about a slice goes on that slice's sub-issue; a question about the
-design goes on the design PR. Chat carries one line and the link.
+A question about a slice goes on that slice's sub-issue. A question about the
+design is a **ruling**: it has a row in the design's table, and while it is
+open it waits as an issue. Chat carries one line and the link.
 
 When a decision is the operator's and the session is waiting for it:
 
-- **The questions live in the case file, not in chat.** Post the pending
-  decisions as a `- [ ]` checklist on the design PR or the issue: one box per
-  decision, the options in one line each, the recommendation, and the items
-  already settled listed beneath so the whole state reads in one place.
+- **An open ruling is an issue**, labelled `ruling`, assigned to the operator,
+  in the repository that owns its consequences — the code the ruling decides
+  on. Its body says what it blocks, what the evidence says, the options in one
+  line each, the recommendation, and how it rules. The label is created with
+  the first ruling in that repository.
+- **The design doc's table points at it**: the row's status reads
+  `open — <repository>#<n>`. No checklist in a pull request's thread; a
+  thread is where a question goes to be lost.
 - **The message to the operator is one line and the link.** Chat scrolls; the
-  checklist does not. Do not restate the questions in the terminal.
+  issue does not. Do not restate the questions in the terminal.
 - **Progress, duplicates and "still waiting" are not relayed.** A builder's
   idle notice, a repeated report or a status line in the terminal buries the
   one message that needs an answer.
-- **When the operator rules,** tick the box, enter the ruling in the design
-  doc's table with attribution, and reply on the same thread.
+- **When the operator rules**, by closing the issue in their own words, enter
+  the ruling in the table with attribution and the issue's link, and reply on
+  the thread that asked. The operator's list of what needs a look is the open
+  issues labelled `ruling`, across the repositories.
 
-Worked example: the checklist thread on rpg-project#632 (event stream). One
-comment posts the decision with its options and a recommendation; a later
-comment adds the decisions a new proposal raised; the ruling comment ticks the
-boxes and names what stays open for veto. The terminal carried one line and a
-link each time.
+Worked example: the Unreal client's rulings — [rpg-dnd5e-unreal#2](https://github.com/KirkDiggler/rpg-dnd5e-unreal/issues/2)
+and [#3](https://github.com/KirkDiggler/rpg-dnd5e-unreal/issues/3) wait as issues; the design's table in
+`ideas/unreal-client/design.md` points at them; the story,
+[rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237), carries the work.
 
 ## The artifacts
 
