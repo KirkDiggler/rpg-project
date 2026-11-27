@@ -187,8 +187,14 @@ on the checkpoint; full `npm run ci-check` at the Web PR boundary, not each edit
 `docs/pipelines/world-materials.md` and selected source recipe. Web modifies
 `scripts/world-material-catalog.mjs`, `src/rendering/worldMaterialTypes.ts`,
 `worldMaterialCatalog.ts`, `worldAtlasCatalogSchema.mjs`/`.d.mts`, corresponding
-catalog/generator tests. Generated catalogs change only through normal generators.
-**Interfaces:** `verify_channel_bindings(catalog: dict, provider_root: Path) -> list[dict]`
+catalog/generator tests. Actual consumer paths also include
+`scripts/generate-world-material-catalog.mjs`, `stage-world-material-preview.mjs`,
+`src/rendering/useWorldMaterialCatalog.ts`, the existing hook test and new
+`src/rendering/materialChannelCatalogSchema.test.ts`. These preserve the new fact
+through generation/staging/runtime projection; they are not another registry.
+Generated catalogs change only through normal generators.
+**Interfaces:** `verify_channel_bindings(catalog: dict, provider_root: Path,
+*, world_provider_root: Path | None = None) -> list[dict]`
 validates the shared schema4 binding shape above; versioned readers produce typed
 bindings on `WorldMaterialCatalog`. Source recipe version3 adds `channelTargets`
 to existing `wallMaterials`/`atlas`; legacy version2 recipes still reproduce schema3.
@@ -201,13 +207,26 @@ and the later visual proof support them; synthetic test ranges are not publicati
 `test_missing_map_or_uv_or_stale_glb_refuses`; `test_representation_selector_mismatch_refuses`;
 `test_range_must_be_finite_positive_and_contain_one`; Web schema3 regression and
 schema4 round-trip/malformed binding tests.
-- [ ] Add refusing/passing provider and reader fixtures; run RED.
-- [ ] Implement source checks and schema4 generation without installation.
-- [ ] Stage named proof targets; save source/binding evidence privately.
-- [ ] Run focused provider/reader GREEN; update contract docs and custody checks.
+- [x] Add refusing/passing provider and reader fixtures; run RED.
+- [x] Implement source checks and schema4 generation without installation.
+- [ ] Finish canonical lantern registration and combined proof-target staging; independent wall/lantern source facts and wall-only v4 candidate are retained privately.
+- [x] Run focused provider/reader GREEN; update contract docs and custody checks.
 **Verification:** Assets `python3 -m unittest discover -s scripts -p 'test_material_channel_capabilities.py'`; Web `npm run test:run -- scripts/worldMaterialCatalog.test.ts scripts/worldAtlasCatalog.test.ts src/rendering/worldMaterialCatalog.test.ts src/rendering/worldAtlasCatalog.test.ts` plus changed generator tests.
 **Evidence:** exact staged catalog/receipt identities and verified target list;
-publication remains T8. No broad Assets suite or art reapproval campaign.
+publication remains T8.
+
+Contract checkpoint: Assets945904a ([draft352](https://github.com/KirkDiggler/rpg-game-assets/pull/352))
+passes90 focused provider/schema/publication tests. Webbbdad020
+([draft1503](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1503)) passes182 focused
+checks and the complete two-CPU gate (11834passed/31skipped; no test limits changed).
+The earlier full run's4 timing/readiness failures remain recorded; all4 also
+passed unchanged in isolation. Real CastleWall01 normal and staged-lantern emission
+bindings verify. A real source-built **wall-only** schema4 candidate has digest
+`037467dfd81b77c2e74dcb0dbe07e787805253c3237d40d9fb69a67596b33a35`, unchanged existing
+material/atlas records, and stages through the Web preview reader. This does not
+complete the lantern's canonical world registration or combined real enrollment;
+those and publication/captured-play evidence remain open. The first verifier
+profile is opaque source materials; nonopaque sources need opacity-aware proof. No broad Assets suite or art reapproval campaign.
 
 ### Task 3: Shared wire leaf and captured-owner fields (T3)
 
