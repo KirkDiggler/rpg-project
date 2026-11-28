@@ -259,11 +259,14 @@ no hand-written tests of protobuf mechanics.
 **Files:** create `material_channels.go`, `material_channels_internal_test.go`,
 `dungeonspec/single_room_material_channels.go` and its tests. Modify inspected
 `field.go`, `data.go`, `testimony.go`, `encounter.go`, `projection.go`,
-`prop_presentation.go`, `structural_walls.go`, `door_frame_presentation.go`,
-`structural_reveal.go`, `dungeonspec/single_room.go`, `single_room_decode.go`,
+`prop_presentation.go`, `prop_observation.go`, `atlas.go`, `structural_walls.go`,
+`door_frame_presentation.go`, `structural_reveal.go`, `dungeonspec/compile.go`,
+`single_room_compile.go`, `single_room.go`, `single_room_decode.go`,
 `single_room_presentation.go`, `single_room_material_overrides.go`,
 `single_room_walls.go`, `single_room_lowering.go`, `single_room_door_frame.go`;
-relevant comparison/hash tests and `doc.go`.
+relevant comparison/hash/observation tests, native named fixture
+`dungeonspec/testdata/material-channels/site.yaml`, readback's explicit NotYet
+classification test, and `doc.go`.
 **Interfaces:** canonical `MaterialChannelAdjustment` and `ChannelAdjustment`
 with explicit mode and multiplier; persisted counterparts preserve presence.
 `validateMaterialChannels`, deep-copy/data conversion helpers. Add typed fields
@@ -278,22 +281,31 @@ compile and reload; `TestMaterialChannelsRememberedAppearanceDoesNotRefresh`;
 `TestMaterialChannelsUnknownTestimonyRefusesFacts`; wall-hidden/door-permitted and
 opening-only reveal assertions; empty legacy SiteHash unchanged. Recompute content
 hash/goldens only from the measured combined encoding, never choose a stale pin.
-- [ ] Add named discriminating tests and see missing/omitted-field RED.
-- [ ] Implement canonical leaf, native capture and every existing custody route.
-- [ ] Run focused tests, then full module/race/lint at its PR boundary.
-- [ ] Push a single-module draft provider PR and record its real commit.
+- [x] Add named discriminating tests and see missing/omitted-field RED.
+- [x] Implement canonical leaf, native capture and every existing custody route.
+- [x] Run focused tests, then full module/race/lint at its PR boundary.
+- [x] Push single-module [Encounter2618](https://github.com/KirkDiggler/rpg-toolkit/pull/2618), head4b9aee80, draft.
 **Verification:** in encounter module `GOWORK=off go test ./...`,
 `GOWORK=off go test -race ./...`, `GOWORK=off golangci-lint run`; targeted
 `go test ./... -run MaterialChannels` during development.
 **Evidence:** immutable/remembered/recipient assertions plus module checks and real pin.
+
+T4 complete at4b9aee80 on base8517aac9. Full module and race checks pass; lint0.
+Two observer/source boundaries and independent frames are tested. Removing only49
+new nil channel fields from the castle encoding reproduces the base hash exactly;
+new combined ContentHash4bcaf68f… is deliberate. Six goldens differ only by added
+null fields; the persisted legacy SiteHash7c7fa22b… stays unchanged. Natural-language
+read-back remains explicitly NotYet, not silently claimed. Adjacent unscoped Atlas
+MaterialOverrides omission is tracked separately in Toolkit2617.
 
 ### Task 5: Session projection and API boundary (T5)
 
 **Delivers:** R7/R9. **Owner:** separate session module PR, then API PR.
 **Prerequisites:** T4 pushed commit; T3 generated SDK for API.
 **Files:** session `types.go`, `read.go`, `launch.go`, `structural.go`,
-`convert.go`, new `material_channels.go` and `material_channels_internal_test.go`,
-existing roster/atlas conversion tests. API snapshot/live `convert_material.go`,
+`convert.go`, `prop_presentation.go`, `door_frame_presentation.go`, new
+`material_channels.go`, `material_channels_internal_test.go`, `material_channels_test.go`,
+existing roster/atlas/shape conversion tests and `doc.go`. API snapshot/live `convert_material.go`,
 `convert_structural.go`/`convert_geometry.go`, `convert_prop_presentation.go`,
 `convert_door_frame.go`, member conversion in `convert.go`; new scoped
 `material_channels_test.go` and `internal/integration/session/material_channels_acceptance_test.go`
@@ -306,7 +318,11 @@ no aliasing, no source-file enrichment. Keep authorization/visibility owners unc
 **Tests:** session source/input/output mutation isolation, remembered roster/reveal;
 API native launch→read→save/reload→cold-host and two recipients; explicit1 and Off
 have exact wire presence, hidden parent absent while frame values remain available.
-- [ ] Pin T4 and write the session boundary RED tests; implement and verify.
+- [x] Pin T4 and write the session boundary RED tests; implement and verify.
+  [Session2623](https://github.com/KirkDiggler/rpg-toolkit/pull/2623), head08133976,
+  draft on the real pushed Encounter4b9aee80 pseudo-version. Full tests/race/lint
+  pass; race590.142s is close to the default timeout on the shared host, recorded
+  rather than hidden or bypassed. API portion below remains pending.
 - [ ] Adopt real SDK/T5 provider commit; write API conversion/integration RED tests.
 - [ ] Implement converters only; run normal gates and push separate PRs.
 **Verification:** session module full/race/lint commands as T4; API
