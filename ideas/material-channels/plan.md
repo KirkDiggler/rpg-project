@@ -319,12 +319,17 @@ no aliasing, no source-file enrichment. Keep authorization/visibility owners unc
 API native launch→read→save/reload→cold-host and two recipients; explicit1 and Off
 have exact wire presence, hidden parent absent while frame values remain available.
 - [x] Pin T4 and write the session boundary RED tests; implement and verify.
-  [Session2623](https://github.com/KirkDiggler/rpg-toolkit/pull/2623), head08133976,
-  draft on the real pushed Encounter4b9aee80 pseudo-version. Full tests/race/lint
-  pass; race590.142s is close to the default timeout on the shared host, recorded
-  rather than hidden or bypassed. API portion below remains pending.
-- [ ] Adopt real SDK/T5 provider commit; write API conversion/integration RED tests.
-- [ ] Implement converters only; run normal gates and push separate PRs.
+  [Session2623](https://github.com/KirkDiggler/rpg-toolkit/pull/2623), headab0d12c9,
+  normally caught up to main and retaining Encounter4b9aee80. Full tests/race/lint
+  pass. Correction: package race elapsed is not timeout margin; TestMain prepares
+  fixtures before m.Run. No timeout change. Current-head remote checks remain unclaimed.
+- [x] Adopt real SDK/T5 provider commit; write API conversion/integration RED tests.
+  Retained dev's generated SDK294; normal Go pins consume Sessionab0d12c9.
+- [x] Implement converters only; run normal gates and push separate PRs.
+  [API1299](https://github.com/KirkDiggler/rpg-api/pull/1299), headf8369513, draft;
+  complete local ci-check passes, including race/coverage tests. Native/two-recipient/
+  cold-host/frame-with-hidden-wall evidence is in its tests and run record. Neither
+  draft is merge-ready; release pins and whole-wave acceptance remain T8.
 **Verification:** session module full/race/lint commands as T4; API
 `GOWORK=off make ci-check`. Generated mechanics are not retested in Protos.
 **Evidence:** provider and API claims separated; cold-host/recipient integration output.
