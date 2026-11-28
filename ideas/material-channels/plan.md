@@ -402,10 +402,18 @@ incompatible look refuses until explicit reset; default/off/1 native round-trip;
 current served castle round-trip; captured wall/frame/member/mutable-prop reload;
 unknown/hidden recipients receive no added facts; source refs and mechanical door
 state remain unchanged.
-- [ ] Add shared-panel/owner/native and wire-adapter RED tests.
-- [ ] Implement adapters and staged controls, then connect permitted captured values.
-- [ ] Run focused GREEN; full `npm run ci-check` before Web PR opening/update.
+- [x] Add shared-panel/owner/native and wire-adapter RED tests.
+- [x] Implement adapters and staged controls, then connect permitted captured values.
+- [x] Run focused GREEN; full `npm run ci-check` before Web PR opening/update.
 **Evidence:** real owner transitions and generated-wire integration, not a second store.
+
+Code checkpoint: Web7c822c5b ([draft1503](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1503)).
+Full normal local gate and post-commit task-done gate pass11922tests/31skipped,
+932files/1skipped. Native/captured adapters, exact staged history, unavailable reset,
+compatible fixed-scope projection and no source enrichment are exercised. Runtime
+projection uses a shared typed helper; the existing capture owner is extended,
+not replaced. Provider enrollment, actual browser acceptance and release remain
+T2/T8; code gates do not approve source installation or merging.
 
 ### Task 8: Named enrollment, early view, walk, review and release pins (T8)
 
