@@ -209,7 +209,7 @@ and the later visual proof support them; synthetic test ranges are not publicati
 schema4 round-trip/malformed binding tests.
 - [x] Add refusing/passing provider and reader fixtures; run RED.
 - [x] Implement source checks and schema4 generation without installation.
-- [ ] Finish canonical lantern registration and combined proof-target staging; independent wall/lantern source facts and wall-only v4 candidate are retained privately.
+- [x] Finish normalized lantern candidate registration and combined proof-target staging without installation; exact source/model/world/material evidence is retained privately.
 - [x] Run focused provider/reader GREEN; update contract docs and custody checks.
 **Verification:** Assets `python3 -m unittest discover -s scripts -p 'test_material_channel_capabilities.py'`; Web `npm run test:run -- scripts/worldMaterialCatalog.test.ts scripts/worldAtlasCatalog.test.ts src/rendering/worldMaterialCatalog.test.ts src/rendering/worldAtlasCatalog.test.ts` plus changed generator tests.
 **Evidence:** exact staged catalog/receipt identities and verified target list;
@@ -223,10 +223,18 @@ The earlier full run's4 timing/readiness failures remain recorded; all4 also
 passed unchanged in isolation. Real CastleWall01 normal and staged-lantern emission
 bindings verify. A real source-built **wall-only** schema4 candidate has digest
 `037467dfd81b77c2e74dcb0dbe07e787805253c3237d40d9fb69a67596b33a35`, unchanged existing
-material/atlas records, and stages through the Web preview reader. This does not
-complete the lantern's canonical world registration or combined real enrollment;
-those and publication/captured-play evidence remain open. The first verifier
-profile is opaque source materials; nonopaque sources need opacity-aware proof. No broad Assets suite or art reapproval campaign.
+material/atlas records, and stages through the Web preview reader. That did not
+complete the lantern's world registration at that checkpoint. Assets0ff4676 now
+adds a complete verified315-ref world-owner candidate and joined material catalog
+`80cb8d6fe9f719a30731b603f24f4cec3827adbcd452c57ce9b52d156f8eeeb3`; existing314models,
+314thumbnails and15historical receipts remain exact.63 scoped tests and real source/
+candidate/evidence checks pass. The world/material candidates are not installed or
+approved. The Web reader accepts schema4, but normal preview deliberately refuses
+the new unpinned lantern ref; publication/early-view sequencing remains an operator
+decision in T8. New proxy images were generated but the inline tool omitted them,
+so no new visual inspection is claimed. The first verifier profile is opaque source
+materials; nonopaque sources need opacity-aware proof. No broad Assets suite or art
+reapproval campaign.
 
 ### Task 3: Shared wire leaf and captured-owner fields (T3)
 
@@ -419,6 +427,11 @@ T2/T8; code gates do not approve source installation or merging.
 
 **Delivers:** integrated R1–R10 finish line. **Owner:** lead across existing owners.
 **Prerequisites:** T1–T7, genuine dependency pins, isolated environment.
+**Current decision gate:** the normalized lantern is a new unpinned world ref;
+normal preview refuses it without changing the existing wall-only preview. The
+operator must choose the world-asset prerequisite/publication sequence or approve
+a bounded candidate-world preview extension. No publication permission is inferred
+from preparation approval — [checkpoint and recommendation](https://github.com/KirkDiggler/rpg-project/issues/1192#issuecomment-7237784887).
 **Files:** private Assets `evidence/material-channels/` and selected recipe/catalog
 changes via normal custody; one untracked API `content/material-channels-walk.yaml`;
 Project plan/checklist/run record; normal dependency files only for final repins.
