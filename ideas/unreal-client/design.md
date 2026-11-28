@@ -27,7 +27,10 @@ gRPC to the server port. Both send references and intent and render what
 comes back. What a figure looks like is chosen when it appears: the mounted
 content, or engine shapes (R10). How the Unreal client turns a record beat
 into motion, sound and animation is its own design and is not this document's
-(O1).
+  (O1). The first mounted content is the Kingdom's figures — the pedlar and the
+  guards as the web shows them, a stand-in for the player's figure — promoted
+  from Synty's own Unreal export; the race/class looks of the modular kit are
+  their own story and are not assembled in the client (R11).
 
 ## Law
 
@@ -65,6 +68,7 @@ into motion, sound and animation is its own design and is not this document's
 | R8 | The client takes the contract from the protos repository's published tag and generates it itself, with generators pinned beside the runtime it links. No sibling checkout; a bump is a one-line pull request. Generated C++ published beside the other languages waits until the runtime is settled (R3). | settled | unreal-client, protos | KirkDiggler | 2026-11-26 |
 | R9 | Unreal 5.9 Preview 2, as it runs today: Epic's tags stop at 5.9.0-preview-2 and no release exists. The release is taken when its tag appears. Linux first; platforms are named one at a time, as each is proven. | settled | unreal-client | KirkDiggler | 2026-11-26 |
 | R10 | The client ships a stand-in look. A figure's look is chosen when it appears: the mounted content when its reference resolves, otherwise engine shapes — a flat-colour figure by side, a marker on the active figure, tinted hexes. The game is complete without the content; the content dresses it, as on the web. Motion comes only from the record, whichever look is shown. The shapes are built in two steps: the minimum that lets the game be played, with the game loop; then their polish. The content is Synty's, made for Unreal, from the private store (R6), and comes by reference behind the same seam. The game runs through the engine first; the HUD and control panel come after, and after the interaction model (O1) is designed. | settled | unreal-client | KirkDiggler | 2026-11-27 |
+| R11 | The modular kit is its own story. The first figures the client mounts are the Kingdom's — the pedlar and the guards, as the web shows them, and a stand-in for the player's figure from the same pack — promoted from Synty's own Unreal export of that pack, a copy rather than a conversion. The race/class looks the web assembles from the modular kit (`characters/race-class/`) are a later story of their own; the client does not assemble the modular kit, and until that story the player's figure wears the stand-in or the engine shapes (R10). Synty's native exports are the store's sources, held beside the FBX SourceFiles. | settled | unreal-client | KirkDiggler | 2026-11-28 |
 
 ## Open
 
