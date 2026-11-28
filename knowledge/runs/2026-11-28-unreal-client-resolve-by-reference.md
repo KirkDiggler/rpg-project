@@ -5,7 +5,7 @@ Slice [rpg-project#1287](https://github.com/KirkDiggler/rpg-project/issues/1287)
 ## Shipped
 
 - Six S4 evidence frames and their logs were archived in the private store with their provenance; PR A merged to main `053ee88` — [rpg-game-assets#354](https://github.com/KirkDiggler/rpg-game-assets/pull/354).
-- PR B carries the exact-reference rendering and gates; verified head `af9cf63` — [rpg-dnd5e-unreal#8](https://github.com/KirkDiggler/rpg-dnd5e-unreal/pull/8).
+- PR B carries the exact-reference rendering and gates; verified merged to main `f504524` — [rpg-dnd5e-unreal#8](https://github.com/KirkDiggler/rpg-dnd5e-unreal/pull/8).
 - `ReadMember` carries the wire's `appearance_ref` alongside faction, without rewriting it — [field commit](https://github.com/KirkDiggler/rpg-dnd5e-unreal/commit/16063d4).
 - `FRpgManifest` resolves a player by `class_ref` and a monster by `appearance_ref`; world members, missing files and unknown keys resolve nothing — [manifest commit](https://github.com/KirkDiggler/rpg-dnd5e-unreal/commit/50f5b14).
 - The play module loads the project-config manifest once and hands it to the board through `SetManifest`; the board does not read a path — [hook commit](https://github.com/KirkDiggler/rpg-dnd5e-unreal/commit/7bacbf4).
