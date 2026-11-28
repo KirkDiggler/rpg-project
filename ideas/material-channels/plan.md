@@ -340,10 +340,10 @@ have exact wire presence, hidden parent absent while frame values remain availab
 pure arithmetic kernel; T2 for real binding resolution and material-owner wiring.
 The kernel can be implemented/tested before provider publication; doing so does
 not complete T6's binding, ownership or visual verification.
-**Files:** create `src/rendering/materialChannelValues.ts` and its tests;
-modify `src/components/hex-grid/useRememberedModelTint.ts`,
+**Files:** create `src/rendering/materialChannelValues.ts`,
+`materialChannelMaterials.ts` and their tests; modify `src/components/hex-grid/useRememberedModelTint.ts`,
 `ClassCharacterModel.tsx`, `WorldAssetModel.tsx`,
-`src/npc-activities/ActivityCharacterModel.tsx`, and their ownership/lifecycle tests;
+verify `src/npc-activities/ActivityCharacterModel.tsx` forwarding, and add ownership/lifecycle tests;
 existing surface/atlas treatment paths only where needed for effective-look input.
 **Interfaces:** pure `resolveMaterialChannelValues(input: {source, capabilities,
 adjustment?}): {normalScale, emissiveIntensity}` with immutable tuple snapshots.
@@ -360,17 +360,22 @@ unchanged; default exact restore; Off independently zeroes chosen channel; zero
 source and nonfinite/out-of-range refuse; two instances isolated; repeated setup/
 cleanup not cumulative; fitted repeat/cap targets all receive the same logical
 adjustment; unsupported trim/leaves unchanged; standing/downed selectors differ safely.
-- [ ] Write arithmetic/binding/lifecycle RED tests.
-- [ ] Implement kernel and adapt the existing world/NPC material writers.
-- [ ] Run focused GREEN and established surface/atlas/height/activity regressions.
+- [x] Write arithmetic/binding/lifecycle RED tests.
+- [x] Implement kernel and adapt the existing world/NPC material writers.
+- [x] Run focused GREEN and established surface/atlas/height/activity regressions.
 **Verification:** Web `npm run test:run -- src/rendering/materialChannelValues.test.ts src/rendering/worldSurfaceMaterials.test.ts src/rendering/worldAtlasMaterials.test.ts src/components/hex-grid/WorldAnchoredHeight.test.tsx src/components/hex-grid/ClassCharacterModel.animation.test.tsx` plus new lifecycle tests.
 **Evidence:** numerical, ownership and integration assertions, not just mocked calls.
 
 Kernel checkpoint: Webba4cb643 passes104 focused/regression tests plus eslint and
 typing. Default/Off/scaling, signed normals, source-zero refusal, interval checks,
-detachment/nonaccumulation and shader-float overflow are covered. Actual world/NPC
-material-owner wiring and binding/lifecycle integration remain incomplete; T6 is
-not marked complete from the pure kernel alone.
+detachment/nonaccumulation and shader-float overflow are covered. Writer checkpoint
+Web535f7593 ([draft1503](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1503))
+adds shared pristine binding/write planning, world clone treatment and stable NPC
+snapshot treatment. Existing activity adapters already forward the typed property.
+177 focused/regression tests across19files and complete local ci-check pass
+(11855passed/31skipped). Real fitted repeats/cap, primitive slots, stable ownership,
+StrictMode/reset/overlays and representation changes are tested. This completes
+T6's code contract, not T7 controls or T8 real-asset visual acceptance.
 
 ### Task 7: Shared controls, native adapters and captured rendering (T7)
 
