@@ -78,4 +78,4 @@ into motion, sound and animation is its own design and is not this document's
   every verb is declared. And how a beat becomes motion, sound and animation.
   It is the client's own design, and it starts now: the story is
   [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237). O2 is ruling R9; O3 is
-  settled by R5 to R8, by R10 and by the slice that mounts the content plugin.
+  settled by R5 to R8, by R10 and by the slice that mounts the content.
